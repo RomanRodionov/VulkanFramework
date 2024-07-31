@@ -147,6 +147,7 @@ private:
     {
         if (enableValidationLayers && !checkValidationLayerSupport())
         {
+            SDL_Log("validation layers requested, but not available!");
             throw std::runtime_error("validation layers requested, but not available!");
         }
 
@@ -184,6 +185,7 @@ private:
 
         if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) 
         {
+            SDL_Log("failed to create instance!");
             throw std::runtime_error("failed to create instance!");
         }
 
@@ -196,7 +198,7 @@ private:
             std::cout << "available extensions:\n";
             for (const auto& extension: availableExtensions) 
             {
-                std::cout << "\t" << extension.extensionName << "\n";
+                SDL_Log("\t%s", extension.extensionName);
             }        
         }
     }
@@ -207,7 +209,7 @@ private:
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
     {
-        SDL_Log(pCallbackData->pMessage);
+        SDL_Log("%s", pCallbackData->pMessage);
         return VK_FALSE;
     }
 
@@ -220,6 +222,7 @@ private:
 
         if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
         {
+            SDL_Log("failed to set up debug messenger!");
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
@@ -272,6 +275,7 @@ private:
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         if (deviceCount == 0)
         {
+            SDL_Log("failed to find GPUs with Vulkan support!");
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
         std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -288,13 +292,14 @@ private:
 
         if (physicalDevice == VK_NULL_HANDLE)
         {
+            SDL_Log("failed to find a suitable GPU!");
             throw std::runtime_error("failed to find a suitable GPU!");
         }
 
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
-        std::cout << "picked physical device: " << deviceProperties.deviceName << std::endl;
+        SDL_Log("picked physical device: %s", deviceProperties.deviceName);
     }
 
     struct QueueFamilyIndices
@@ -420,6 +425,7 @@ private:
 
         if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
         {
+            SDL_Log("failed to create logical device!");
             throw std::runtime_error("failed to create logical device!");
         }
 
@@ -431,6 +437,7 @@ private:
     {        
         if (SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_FALSE)
         {
+            SDL_Log("failed to create window surface!");
             throw std::runtime_error("failed to create window surface!");
         }
     }
@@ -532,6 +539,7 @@ private:
 
         if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
         {
+            SDL_Log("failed to create swap chain!");
             throw std::runtime_error("failed to create swap chain!");
         }
 
@@ -542,6 +550,34 @@ private:
         swapChainExtent = extent;
     }
 
+    void createImageViews()
+    {
+        swapChainImageViews.resize(swapChainImages.size());
+
+        for (size_t i = 0; i < swapChainImages.size(); ++i)
+        {
+            VkImageViewCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.image = swapChainImages[i];
+            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            createInfo.format = swapChainImageFormat;
+            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel = 0;
+            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.baseArrayLayer = 0;
+            createInfo.subresourceRange.layerCount = 1;
+            if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
+            {
+                SDL_Log("failed to create image views!");
+                throw std::runtime_error("failed to create image views!");
+            }
+        }
+    }
+
     void initVulkan() 
     {
         createInstance();
@@ -550,6 +586,7 @@ private:
         pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
+        createImageViews();
     }
 
     void mainLoop() 
@@ -571,6 +608,10 @@ private:
 
     void cleanup() 
     {
+        for (auto imageView : swapChainImageViews)
+        {
+            vkDestroyImageView(device, imageView, nullptr);
+        }
         vkDestroySwapchainKHR(device, swapChain, nullptr);
         vkDestroyDevice(device, nullptr);
         if (enableValidationLayers)
@@ -596,6 +637,7 @@ private:
     std::vector<VkImage> swapChainImages;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
+    std::vector<VkImageView> swapChainImageViews;
 };
 
 int main(int argv, char** args) 
