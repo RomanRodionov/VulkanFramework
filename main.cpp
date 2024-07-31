@@ -1,5 +1,7 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
+
+#include <vulkan/vulkan.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -12,6 +14,12 @@
 #include <cstdint>   // for uint32_t
 #include <limits>    // for std::numeric_limits
 #include <algorithm> // for std::clamp
+
+#ifdef _WIN32
+    #pragma comment(linker, "/subsystem:windows")
+    #define VK_USE_PLATFORM_WIN32_KHR
+    #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+#endif
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -75,10 +83,9 @@ public:
 private:
     void initWindow() 
     {
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        window = glfwCreateWindow(WIDTH, HEIGHT, "VulkanApp", nullptr, nullptr);
+        SDL_Init(SDL_INIT_VIDEO);
+        SDL_Vulkan_LoadLibrary(nullptr);
+        window = SDL_CreateWindow("VulkanApp", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
     }
 
     bool checkValidationLayerSupport() 
@@ -113,17 +120,17 @@ private:
 
     std::vector<const char*> getRequiredExtensions()
     {
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+        uint32_t sdlExtensionCount = 0;
+        std::vector<const char*> sdlExtensions;
+        SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, nullptr);
+        sdlExtensions.resize(sdlExtensionCount);
+        SDL_Vulkan_GetInstanceExtensions(window, &sdlExtensionCount, sdlExtensions.data());
 
         if (enableValidationLayers)
         {
-            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            sdlExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
-        return extensions;
+        return sdlExtensions;
     }
 
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
@@ -146,9 +153,9 @@ private:
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         appInfo.pApplicationName = "VulkanApp";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.applicationVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
         appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.engineVersion = VK_MAKE_API_VERSION(1, 0, 0, 0);
         appInfo.apiVersion = VK_API_VERSION_1_2;
 
         VkInstanceCreateInfo createInfo{};
@@ -200,7 +207,7 @@ private:
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
     {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        SDL_Log(pCallbackData->pMessage);
         return VK_FALSE;
     }
 
@@ -421,8 +428,8 @@ private:
     }
 
     void createSurface()
-    {
-        if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+    {        
+        if (SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_FALSE)
         {
             throw std::runtime_error("failed to create window surface!");
         }
@@ -461,7 +468,7 @@ private:
         else
         {
             int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
+            SDL_Vulkan_GetDrawableSize(window, &width, &height);
 
             VkExtent2D actualExtent =
             {
@@ -511,6 +518,8 @@ private:
         else
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            createInfo.queueFamilyIndexCount = 0;
+            createInfo.pQueueFamilyIndices = nullptr;
         }
 
         createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
@@ -519,7 +528,7 @@ private:
         createInfo.clipped = VK_TRUE;
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-        _putenv("DISABLE_VK_LAYER_VALVE_steam_overlay_1=1"); // otherwise glfwDestroyWindow() is crashing
+        //_putenv("DISABLE_VK_LAYER_VALVE_steam_overlay_1=1"); // steam overlay causes troubles sometimes
 
         if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
         {
@@ -545,9 +554,18 @@ private:
 
     void mainLoop() 
     {
-        while(!glfwWindowShouldClose(window)) 
+        bool running = true;
+        while(running) 
         {
-            glfwPollEvents();
+            SDL_Event windowEvent;
+            while(SDL_PollEvent(&windowEvent))
+            {
+                if(windowEvent.type == SDL_QUIT) 
+                {
+                    running = false;
+                    break;
+                }
+            }
         }
     }
 
@@ -561,12 +579,12 @@ private:
         }
         vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyInstance(instance, nullptr);
-        //std::cout << (unsigned long long) window << std::endl;
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        SDL_DestroyWindow(window);
+        SDL_Vulkan_UnloadLibrary();
+        SDL_Quit();
     }
     
-    GLFWwindow* window;
+    SDL_Window* window;
     VkInstance instance;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device;
@@ -580,7 +598,7 @@ private:
     VkExtent2D swapChainExtent;
 };
 
-int main() 
+int main(int argv, char** args) 
 {
     VulkanApp app;
 
