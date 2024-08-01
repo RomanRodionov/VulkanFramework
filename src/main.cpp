@@ -15,6 +15,8 @@
 #include <limits>    // for std::numeric_limits
 #include <algorithm> // for std::clamp
 
+#include "load_shader.hpp"
+
 #ifdef _WIN32
     #pragma comment(linker, "/subsystem:windows")
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -81,13 +83,6 @@ public:
     }
 
 private:
-    void initWindow() 
-    {
-        SDL_Init(SDL_INIT_VIDEO);
-        SDL_Vulkan_LoadLibrary(nullptr);
-        window = SDL_CreateWindow("VulkanApp", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
-    }
-
     bool checkValidationLayerSupport() 
     {
         uint32_t layerCount;
@@ -147,7 +142,6 @@ private:
     {
         if (enableValidationLayers && !checkValidationLayerSupport())
         {
-            SDL_Log("validation layers requested, but not available!");
             throw std::runtime_error("validation layers requested, but not available!");
         }
 
@@ -185,7 +179,6 @@ private:
 
         if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) 
         {
-            SDL_Log("failed to create instance!");
             throw std::runtime_error("failed to create instance!");
         }
 
@@ -222,7 +215,6 @@ private:
 
         if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
         {
-            SDL_Log("failed to set up debug messenger!");
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
@@ -275,7 +267,6 @@ private:
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         if (deviceCount == 0)
         {
-            SDL_Log("failed to find GPUs with Vulkan support!");
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
         std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -292,7 +283,6 @@ private:
 
         if (physicalDevice == VK_NULL_HANDLE)
         {
-            SDL_Log("failed to find a suitable GPU!");
             throw std::runtime_error("failed to find a suitable GPU!");
         }
 
@@ -425,7 +415,6 @@ private:
 
         if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
         {
-            SDL_Log("failed to create logical device!");
             throw std::runtime_error("failed to create logical device!");
         }
 
@@ -437,7 +426,6 @@ private:
     {        
         if (SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_FALSE)
         {
-            SDL_Log("failed to create window surface!");
             throw std::runtime_error("failed to create window surface!");
         }
     }
@@ -539,7 +527,6 @@ private:
 
         if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
         {
-            SDL_Log("failed to create swap chain!");
             throw std::runtime_error("failed to create swap chain!");
         }
 
@@ -557,25 +544,75 @@ private:
         for (size_t i = 0; i < swapChainImages.size(); ++i)
         {
             VkImageViewCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = swapChainImages[i];
+            createInfo.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            createInfo.image    = swapChainImages[i];
             createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = swapChainImageFormat;
+            createInfo.format   = swapChainImageFormat;
             createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
             createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
+            createInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            createInfo.subresourceRange.baseMipLevel   = 0;
+            createInfo.subresourceRange.levelCount     = 1;
             createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
+            createInfo.subresourceRange.layerCount     = 1;
             if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
             {
-                SDL_Log("failed to create image views!");
                 throw std::runtime_error("failed to create image views!");
             }
         }
+    }
+
+    VkShaderModule createShaderModule(const std::vector<char>& code)
+    {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = code.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+        
+        VkShaderModule shaderModule;
+        if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create shader module!");
+        }
+
+        return shaderModule;
+    }
+
+    void createGraphicsPipeline()
+    {
+        auto vertShaderCode = readBinaryFile("build/shaders/shader.vert.spv");
+        auto fragShaderCode = readBinaryFile("build/shaders/shader.frag.spv");
+        
+        VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+        VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vertShaderStageInfo.module = vertShaderModule;
+        vertShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        fragShaderStageInfo.module = fragShaderModule;
+        fragShaderStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+        //TO-DO
+
+        vkDestroyShaderModule(device, fragShaderModule, nullptr);
+        vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    }
+    
+    void initWindow() 
+    {
+        SDL_Init(SDL_INIT_VIDEO);
+        SDL_Vulkan_LoadLibrary(nullptr);
+        window = SDL_CreateWindow("VulkanApp", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_VULKAN);
     }
 
     void initVulkan() 
@@ -587,6 +624,7 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createGraphicsPipeline();
     }
 
     void mainLoop() 
@@ -650,7 +688,7 @@ int main(int argv, char** args)
     } 
     catch (const std::exception& e) 
     {
-        std::cerr << e.what() << std::endl;
+        SDL_Log("%s", e.what());
         return EXIT_FAILURE;
     }
 

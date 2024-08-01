@@ -1,2 +1,3 @@
-build/
-lib/
+build/*
+extern/*
+resources/compiled_shaders/*
