@@ -25,7 +25,12 @@ list(APPEND SPV_SHADERS ${CMAKE_CURRENT_BINARY_DIR}/shaders/${FILENAME}.spv)
 endForeach()
 
 add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
-add_executable(vulkanApp ${SRC_DIR}/main.cpp ${SRC_DIR}/load_shader.cpp  ${SHADERS})
+add_executable(
+    vulkanApp 
+    ${SRC_DIR}/main.cpp 
+    ${SRC_DIR}/load_shader.cpp  
+    ${SRC_DIR}/vertex_data.cpp
+    ${SHADERS})
 add_dependencies(vulkanApp shaders)
 
 target_link_libraries(
