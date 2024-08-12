@@ -910,7 +910,7 @@ private:
         renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
-        VkClearValue clearColor = {{{0.992f, 0.973f, 0.0f, 1.0f}}};
+        VkClearValue clearColor = {{{0.1f, 0.1f, 0.1f, 1.0f}}};
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -934,8 +934,9 @@ private:
         VkBuffer vertexBuffers[] = {vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-    
-        vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
         vkCmdEndRenderPass(commandBuffer);
 
@@ -1132,8 +1133,8 @@ private:
 
     void createVertexBuffer()
     {
-        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.transferFamily.value()};
+        QueueFamilyIndices familyIndices = findQueueFamilies(physicalDevice);
+        uint32_t queueFamilyIndices[] = {familyIndices.graphicsFamily.value(), familyIndices.transferFamily.value()};
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1168,6 +1169,45 @@ private:
         vkDestroyBuffer(device, stagingBuffer, nullptr);
         vkFreeMemory(device, stagingBufferMemory, nullptr);
     }   
+
+    void createIndexBuffer()
+    {
+        QueueFamilyIndices familyIndices = findQueueFamilies(physicalDevice);
+        uint32_t queueFamilyIndices[] = {familyIndices.graphicsFamily.value(), familyIndices.transferFamily.value()};
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        CustomBufferCreateInfo customBufferInfo{};
+        customBufferInfo.size = sizeof(indices[0]) * indices.size();
+        customBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        customBufferInfo.properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        customBufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+        customBufferInfo.queueFamilyIndexCount = 2;
+        customBufferInfo.pQueueFamilyIndices = queueFamilyIndices;
+
+        createBuffer(customBufferInfo, stagingBuffer, stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(device, stagingBufferMemory, 0, customBufferInfo.size, 0, &data);
+        memcpy(data, indices.data(), (size_t) customBufferInfo.size);
+        vkUnmapMemory(device, stagingBufferMemory);
+
+        customBufferInfo = {};
+        customBufferInfo.size = sizeof(indices[0]) * indices.size();
+        customBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        customBufferInfo.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        customBufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+        customBufferInfo.queueFamilyIndexCount = 2;
+        customBufferInfo.pQueueFamilyIndices = queueFamilyIndices;
+
+        createBuffer(customBufferInfo, indexBuffer, indexBufferMemory);
+    
+        copyBuffer(stagingBuffer, indexBuffer, customBufferInfo.size);
+
+        vkDestroyBuffer(device, stagingBuffer, nullptr);
+        vkFreeMemory(device, stagingBufferMemory, nullptr);
+    } 
     
     void initWindow() 
     {
@@ -1190,6 +1230,7 @@ private:
         createFramebuffers();
         createCommandPools();
         createVertexBuffer();
+        createIndexBuffer();
         createCommandBuffers();
         createSyncObjects();
     }
@@ -1246,6 +1287,9 @@ private:
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexBufferMemory, nullptr);
+
+        vkDestroyBuffer(device, indexBuffer, nullptr);
+        vkFreeMemory(device, indexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
         {
@@ -1309,6 +1353,8 @@ private:
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
 
     bool framebufferResized = false;
 };
