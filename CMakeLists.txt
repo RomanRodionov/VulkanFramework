@@ -28,8 +28,16 @@ add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
 add_executable(
     vulkanApp 
     ${SRC_DIR}/main.cpp 
+    ${SRC_DIR}/vulkan_app.cpp
     ${SRC_DIR}/load_shader.cpp  
     ${SRC_DIR}/vertex_data.cpp
+    ${SRC_DIR}/instance_creation.cpp
+    ${SRC_DIR}/device_creation.cpp
+    ${SRC_DIR}/buffer_creation.cpp
+    ${SRC_DIR}/swapchain_creation.cpp
+    ${SRC_DIR}/graphics_commands.cpp
+    ${SRC_DIR}/sync_objects.cpp
+    ${SRC_DIR}/command_buffer.cpp
     ${SHADERS})
 add_dependencies(vulkanApp shaders)
 
@@ -37,6 +45,5 @@ target_link_libraries(
     vulkanApp PRIVATE
     ${SDL2_LIBRARIES} 
     Vulkan::Vulkan)
-
     
 include_directories(${SDL2_INCLUDE_DIRS})
