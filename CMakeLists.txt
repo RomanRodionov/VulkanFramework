@@ -38,6 +38,8 @@ add_executable(
     ${SRC_DIR}/graphics_commands.cpp
     ${SRC_DIR}/sync_objects.cpp
     ${SRC_DIR}/command_buffer.cpp
+    ${SRC_DIR}/uniform_buffers.cpp
+    ${SRC_DIR}/timer.cpp
     ${SHADERS})
 add_dependencies(vulkanApp shaders)
 

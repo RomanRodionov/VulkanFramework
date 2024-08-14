@@ -1,5 +1,6 @@
 #include "vulkan_app.hpp"
 
+
 void VulkanApp::initWindow() 
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -17,17 +18,23 @@ void VulkanApp::initVulkan()
     createSwapChain();
     createImageViews();
     createRenderPass();
+    createDescriptorSetLayout();
     createGraphicsPipeline();
     createFramebuffers();
     createCommandPools();
     createVertexBuffer();
     createIndexBuffer();
+    createUniformBuffers();
+    createDescriptorPool();
+    createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
 }
 
 void VulkanApp::mainLoop() 
 {
+    beginTimer();
+
     bool running = true;
     while(running) 
     {
@@ -61,6 +68,15 @@ void VulkanApp::cleanup()
 {
     cleanupSwapChain();
 
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+    }
+
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
@@ -92,4 +108,12 @@ void VulkanApp::cleanup()
     SDL_DestroyWindow(window);
     SDL_Vulkan_UnloadLibrary();
     SDL_Quit();
+}
+
+void VulkanApp::run() 
+{
+    initWindow();
+    initVulkan();
+    mainLoop();
+    cleanup();
 }
