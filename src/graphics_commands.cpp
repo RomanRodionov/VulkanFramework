@@ -20,8 +20,8 @@ void VulkanApp::createGraphicsPipeline()
 {
     // SHADER STAGES
 
-    auto vertShaderCode = readBinaryFile("build/shaders/shader.vert.spv");
-    auto fragShaderCode = readBinaryFile("build/shaders/shader.frag.spv");
+    auto vertShaderCode = readBinaryFile("resources/shaders/shader.vert.spv");
+    auto fragShaderCode = readBinaryFile("resources/shaders/shader.frag.spv");
     
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

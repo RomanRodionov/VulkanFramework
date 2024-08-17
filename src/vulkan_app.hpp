@@ -155,6 +155,8 @@ private:
     void createIndexBuffer();
     void createUniformBuffers();
     void updateUniformBuffer(uint32_t currentImage);
+
+    void createTextureImage();
     
     void beginTimer();
     float getTime();
