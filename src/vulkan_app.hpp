@@ -182,7 +182,9 @@ private:
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     void createTextureImage();
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-    
+    void createTextureImageView();
+    void createTextureSampler();
+
     void beginTimer();
     float getTime();
 
@@ -239,6 +241,8 @@ private:
 
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
+    VkImageView textureImageView;
+    VkSampler textureSampler;
 
     bool framebufferResized = false;
 

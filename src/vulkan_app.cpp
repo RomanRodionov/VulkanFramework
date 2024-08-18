@@ -23,6 +23,8 @@ void VulkanApp::initVulkan()
     createFramebuffers();
     createCommandPools();
     createTextureImage();
+    createTextureImageView();
+    createTextureSampler();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -68,6 +70,9 @@ void VulkanApp::mainLoop()
 void VulkanApp::cleanup() 
 {
     cleanupSwapChain();
+
+    vkDestroySampler(device, textureSampler, nullptr);
+    vkDestroyImageView(device, textureImageView, nullptr);
 
     vkDestroyImage(device, textureImage, nullptr);
     vkFreeMemory(device, textureImageMemory, nullptr);
