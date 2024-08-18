@@ -102,6 +102,26 @@ private:
         const uint32_t* pQueueFamilyIndices = nullptr;
     };
 
+    struct CustomImageCreateInfo
+    {
+        VkImageType imageType = VK_IMAGE_TYPE_2D;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth = 1;
+        uint32_t mipLevels = 1;
+        uint32_t arrayLayers = 1;
+        VkFormat format;
+        VkImageTiling tiling;
+        VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        VkImageUsageFlags usage;
+        VkMemoryPropertyFlags properties;
+        VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+        VkImageCreateFlags flags = 0;
+        VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        uint32_t queueFamilyIndexCount = 0; 
+        const uint32_t* pQueueFamilyIndices = nullptr;
+    };
+
     struct UniformBufferObject
     {
         glm::mat4 model;
@@ -144,6 +164,8 @@ private:
     void createCommandPools();
     void createCommandBuffers();
     void recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    VkCommandBuffer beginSingleTimeCommands(VkCommandPool commandPool);
+    void endSingleTimeCommands(VkCommandPool commandPool, VkCommandBuffer commandBuffer, VkQueue queue);
 
     void createSyncObjects();
     void drawFrame();
@@ -156,7 +178,10 @@ private:
     void createUniformBuffers();
     void updateUniformBuffer(uint32_t currentImage);
 
+    void createImage(CustomImageCreateInfo& customImageInfo, VkImage& image, VkDeviceMemory& imageMemory);
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     void createTextureImage();
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
     
     void beginTimer();
     float getTime();
@@ -211,6 +236,9 @@ private:
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
+
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
 
     bool framebufferResized = false;
 
