@@ -29,11 +29,6 @@ VkFormat VulkanApp::findDepthFormat()
     );
 }
 
-static bool hasStencilComponent(VkFormat format)
-{
-    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-}
-
 void VulkanApp::createDepthResources()
 {
     VkFormat depthFormat = findDepthFormat();
@@ -53,4 +48,7 @@ void VulkanApp::createDepthResources()
     customImageViewInfo.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
     createImageView(customImageViewInfo, depthImage, depthImageView);
+
+    transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
 }

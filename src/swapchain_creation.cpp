@@ -150,6 +150,7 @@ void VulkanApp::recreateSwapChain()
 
     createSwapChain();
     createImageViews();
+    createDepthResources();
     createFramebuffers();
 }
 
@@ -182,6 +183,10 @@ void VulkanApp::createImageViews()
 
 void VulkanApp::cleanupSwapChain()
 {
+    vkDestroyImageView(device, depthImageView, nullptr);
+    vkDestroyImage(device, depthImage, nullptr);
+    vkFreeMemory(device, depthImageMemory, nullptr);
+
     for (size_t i = 0; i < swapChainFramebuffers.size(); ++i)
     {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
