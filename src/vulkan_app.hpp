@@ -122,6 +122,21 @@ private:
         const uint32_t* pQueueFamilyIndices = nullptr;
     };
 
+    struct CustomImageViewCreateInfo
+    {
+        VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
+        VkFormat format;
+        VkComponentSwizzle r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        VkComponentSwizzle g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        VkComponentSwizzle b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        VkComponentSwizzle a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        uint32_t baseMipLevel   = 0;
+        uint32_t levelCount     = 1;
+        uint32_t baseArrayLayer = 0;
+        uint32_t layerCount     = 1;
+    };
+
     struct UniformBufferObject
     {
         glm::mat4 model;
@@ -182,8 +197,13 @@ private:
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     void createTextureImage();
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void createImageView(CustomImageViewCreateInfo& createInfo, VkImage& image, VkImageView& imageView);
     void createTextureImageView();
     void createTextureSampler();
+
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    void createDepthResources();
+    VkFormat findDepthFormat();
 
     void beginTimer();
     float getTime();
@@ -243,6 +263,10 @@ private:
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
+
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
 
     bool framebufferResized = false;
 

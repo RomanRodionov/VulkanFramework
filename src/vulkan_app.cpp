@@ -22,6 +22,7 @@ void VulkanApp::initVulkan()
     createGraphicsPipeline();
     createFramebuffers();
     createCommandPools();
+    createDepthResources();
     createTextureImage();
     createTextureImageView();
     createTextureSampler();

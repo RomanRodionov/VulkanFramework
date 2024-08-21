@@ -21,25 +21,25 @@ void VulkanApp::createImage(VulkanApp::CustomImageCreateInfo& customImageInfo, V
     imageInfo.queueFamilyIndexCount = customImageInfo.queueFamilyIndexCount;
     imageInfo.pQueueFamilyIndices = customImageInfo.pQueueFamilyIndices;
 
-    if (vkCreateImage(device, &imageInfo, nullptr, &textureImage) != VK_SUCCESS)
+    if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create image!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(device, textureImage, &memRequirements);
+    vkGetImageMemoryRequirements(device, image, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, customImageInfo.properties);
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &textureImageMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
-    vkBindImageMemory(device, textureImage, textureImageMemory, 0);
+    vkBindImageMemory(device, image, imageMemory, 0);
 
 }
 
@@ -200,26 +200,35 @@ void VulkanApp::transitionImageLayout(VkImage image, VkFormat format, VkImageLay
     endSingleTimeCommands(commandPool, commandBuffer, queue);
 }
 
-void VulkanApp::createTextureImageView()
+void VulkanApp::createImageView(CustomImageViewCreateInfo& customCreateInfo, VkImage& image, VkImageView& imageView)
 {
     VkImageViewCreateInfo createInfo{};
     createInfo.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    createInfo.image    = textureImage;
-    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    createInfo.format   = VK_FORMAT_R8G8B8A8_SRGB;
-    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    createInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    createInfo.subresourceRange.baseMipLevel   = 0;
-    createInfo.subresourceRange.levelCount     = 1;
-    createInfo.subresourceRange.baseArrayLayer = 0;
-    createInfo.subresourceRange.layerCount     = 1;
-    if (vkCreateImageView(device, &createInfo, nullptr, &textureImageView) != VK_SUCCESS)
+    createInfo.image    = image;
+    createInfo.viewType = customCreateInfo.viewType;
+    createInfo.format   = customCreateInfo.format;
+    createInfo.components.r = customCreateInfo.r;
+    createInfo.components.g = customCreateInfo.g;
+    createInfo.components.b = customCreateInfo.b;
+    createInfo.components.a = customCreateInfo.a;
+    createInfo.subresourceRange.aspectMask     = customCreateInfo.aspectMask;
+    createInfo.subresourceRange.baseMipLevel   = customCreateInfo.baseMipLevel;
+    createInfo.subresourceRange.levelCount     = customCreateInfo.levelCount;
+    createInfo.subresourceRange.baseArrayLayer = customCreateInfo.baseArrayLayer;
+    createInfo.subresourceRange.layerCount     = customCreateInfo.layerCount;
+    
+    if (vkCreateImageView(device, &createInfo, nullptr, &imageView) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create texture image view!");
     }
+}
+
+void VulkanApp::createTextureImageView()
+{
+    CustomImageViewCreateInfo customCreateInfo{};
+    customCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+
+    createImageView(customCreateInfo, textureImage, textureImageView);
 }
 
 void VulkanApp::createTextureSampler()

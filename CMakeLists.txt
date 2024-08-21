@@ -45,6 +45,7 @@ add_executable(
     ${SRC_DIR}/timer.cpp
     ${SRC_DIR}/stb_implementation.cpp
     ${SRC_DIR}/texture.cpp
+    ${SRC_DIR}/depth_buffering.cpp
     ${SHADERS})
 add_dependencies(vulkanApp shaders)
 
