@@ -1,6 +1,5 @@
 #include "vulkan_app.hpp"
 
-
 void VulkanApp::initWindow() 
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -26,6 +25,7 @@ void VulkanApp::initVulkan()
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
+    loadModel();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();

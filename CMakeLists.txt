@@ -10,12 +10,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 SET(GLM_TEST_ENABLE OFF CACHE BOOL "GLM Build unit tests")
 add_subdirectory(extern/glm EXCLUDE_FROM_ALL)
 
-include_directories(extern/stb)
-
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 set(SHADERS_SRC ${SRC_DIR}/shaders)
 file(GLOB SHADERS ${SHADERS_SRC}/*.vert ${SHADERS_SRC}/*.frag ${SHADERS_SRC}/*.comp ${SHADERS_SRC}/*.geom ${SHADERS_SRC}/*.tesc ${SHADERS_SRC}/*.tese ${SHADERS_SRC}/*.mesh ${SHADERS_SRC}/*.task ${SHADERS_SRC}/*.rgen ${SHADERS_SRC}/*.rchit ${SHADERS_SRC}/*.rmiss)
+
+include(FetchContent)
+set(FETCHCONTENT_BASE_DIR ${PROJECT_SOURCE_DIR}/extern CACHE PATH "Missing description." FORCE)
+FetchContent_Declare(assimp
+GIT_REPOSITORY https://github.com/assimp/assimp.git
+GIT_TAG master)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+FetchContent_MakeAvailable(assimp)
 
 foreach(SHADER IN LISTS SHADERS)
     get_filename_component(FILENAME ${SHADER} NAME)
@@ -46,12 +56,17 @@ add_executable(
     ${SRC_DIR}/stb_implementation.cpp
     ${SRC_DIR}/texture.cpp
     ${SRC_DIR}/depth_buffering.cpp
+    ${SRC_DIR}/load_model.cpp
     ${SHADERS})
 add_dependencies(vulkanApp shaders)
 
-target_link_libraries(
-    vulkanApp PRIVATE
-    ${SDL2_LIBRARIES} 
-    Vulkan::Vulkan)
-    
+include_directories(extern/stb)
 include_directories(${SDL2_INCLUDE_DIRS})
+target_include_directories(vulkanApp PRIVATE extern/assimp-src/include)
+
+
+target_link_libraries(
+    vulkanApp
+    ${SDL2_LIBRARIES} 
+    Vulkan::Vulkan
+    assimp)

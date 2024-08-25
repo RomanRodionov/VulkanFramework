@@ -1,4 +1,3 @@
 build/*
 extern/*
-resources/shaders/*
-resources/textures/*
+resources/*

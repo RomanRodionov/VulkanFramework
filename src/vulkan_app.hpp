@@ -23,7 +23,9 @@
 #include <chrono>
 
 #include "load_shader.hpp"
+#include "load_model.hpp"
 #include "vertex_data.hpp"
+#include "common.hpp"
 
 #ifdef _WIN32
     #pragma comment(linker, "/subsystem:windows")
@@ -201,6 +203,8 @@ private:
     void createTextureImageView();
     void createTextureSampler();
 
+    void loadModel();
+
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     void createDepthResources();
     VkFormat findDepthFormat();
@@ -249,6 +253,9 @@ private:
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
