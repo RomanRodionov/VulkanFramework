@@ -1,6 +1,6 @@
 #include "vulkan_app.hpp"
 
-VulkanApp::SwapChainSupportDetails VulkanApp::querySwapChainSupport(VkPhysicalDevice device)
+SwapChainSupportDetails VulkanApp::querySwapChainSupport(VkPhysicalDevice device)
 {
     SwapChainSupportDetails details;
 

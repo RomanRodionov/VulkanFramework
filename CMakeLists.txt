@@ -38,25 +38,28 @@ endForeach()
 
 add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
 
+set(VULKAN_APP_SRC     
+    ${SRC_DIR}/vulkan_app/vulkan_app.cpp
+    ${SRC_DIR}/vulkan_app/load_shader.cpp  
+    ${SRC_DIR}/vulkan_app/vertex_data.cpp
+    ${SRC_DIR}/vulkan_app/instance_creation.cpp
+    ${SRC_DIR}/vulkan_app/device_creation.cpp
+    ${SRC_DIR}/vulkan_app/buffer_creation.cpp
+    ${SRC_DIR}/vulkan_app/swapchain_creation.cpp
+    ${SRC_DIR}/vulkan_app/graphics_commands.cpp
+    ${SRC_DIR}/vulkan_app/sync_objects.cpp
+    ${SRC_DIR}/vulkan_app/command_buffer.cpp
+    ${SRC_DIR}/vulkan_app/uniform_buffers.cpp
+    ${SRC_DIR}/vulkan_app/timer.cpp
+    ${SRC_DIR}/vulkan_app/stb_implementation.cpp
+    ${SRC_DIR}/vulkan_app/texture.cpp
+    ${SRC_DIR}/vulkan_app/depth_buffering.cpp
+    ${SRC_DIR}/vulkan_app/load_model.cpp)
+
 add_executable(
     vulkanApp 
     ${SRC_DIR}/main.cpp 
-    ${SRC_DIR}/vulkan_app.cpp
-    ${SRC_DIR}/load_shader.cpp  
-    ${SRC_DIR}/vertex_data.cpp
-    ${SRC_DIR}/instance_creation.cpp
-    ${SRC_DIR}/device_creation.cpp
-    ${SRC_DIR}/buffer_creation.cpp
-    ${SRC_DIR}/swapchain_creation.cpp
-    ${SRC_DIR}/graphics_commands.cpp
-    ${SRC_DIR}/sync_objects.cpp
-    ${SRC_DIR}/command_buffer.cpp
-    ${SRC_DIR}/uniform_buffers.cpp
-    ${SRC_DIR}/timer.cpp
-    ${SRC_DIR}/stb_implementation.cpp
-    ${SRC_DIR}/texture.cpp
-    ${SRC_DIR}/depth_buffering.cpp
-    ${SRC_DIR}/load_model.cpp
+    ${VULKAN_APP_SRC}
     ${SHADERS})
 add_dependencies(vulkanApp shaders)
 

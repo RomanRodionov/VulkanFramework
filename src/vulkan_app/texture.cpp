@@ -1,7 +1,7 @@
 #include "vulkan_app.hpp"
 #include "stb_image.h"
 
-void VulkanApp::createImage(VulkanApp::CustomImageCreateInfo& customImageInfo, VkImage& image, VkDeviceMemory& imageMemory)
+void VulkanApp::createImage(CustomImageCreateInfo& customImageInfo, VkImage& image, VkDeviceMemory& imageMemory)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

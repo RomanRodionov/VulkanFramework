@@ -16,7 +16,7 @@ uint32_t VulkanApp::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pr
     throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void VulkanApp::createBuffer(VulkanApp::CustomBufferCreateInfo& customBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void VulkanApp::createBuffer(CustomBufferCreateInfo& customBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

@@ -73,7 +73,7 @@ void VulkanApp::pickPhysicalDevice()
     SDL_Log("picked physical device: %s", deviceProperties.deviceName);
 }
 
-VulkanApp::QueueFamilyIndices VulkanApp::findQueueFamilies(VkPhysicalDevice device)
+QueueFamilyIndices VulkanApp::findQueueFamilies(VkPhysicalDevice device)
 {
     QueueFamilyIndices indices;
 
