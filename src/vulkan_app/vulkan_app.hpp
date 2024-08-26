@@ -124,10 +124,11 @@ private:
     void createImage(CustomImageCreateInfo& customImageInfo, VkImage& image, VkDeviceMemory& imageMemory);
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     void createTextureImage();
-    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
     void createImageView(CustomImageViewCreateInfo& createInfo, VkImage& image, VkImageView& imageView);
     void createTextureImageView();
     void createTextureSampler();
+    void generateMipmaps(VkImage image, VkFormat format, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
     void loadModel();
 
@@ -193,6 +194,7 @@ private:
     std::vector<void*> uniformBuffersMapped;
 
     VkImage textureImage;
+    uint32_t mipLevels;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
